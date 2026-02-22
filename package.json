@@ -1,0 +1,16 @@
+{
+  "name": "astro-image-defaults",
+  "version": "1.0.0",
+  "description": "Shared image optimization config for Astro sites on Netlify. Build-time srcset detection + edge CDN fallback.",
+  "main": "index.mjs",
+  "type": "module",
+  "files": [
+    "index.mjs",
+    "image-srcset.mjs",
+    "netlify-image-headers.mjs",
+    "README.md"
+  ],
+  "keywords": ["astro", "image", "optimization", "netlify", "srcset"],
+  "author": "Genaro",
+  "license": "MIT"
+}
