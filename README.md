@@ -1,18 +1,42 @@
 # astro-image-defaults
 
-Shared image optimization for Astro sites on Netlify. Two layers:
+Standard image optimization for Astro sites on Netlify. Belt and suspenders:
 
-1. **Build-time** (Option 1): Auto-detects `{name}-{width}w.webp` variants in `/public/images/` and generates srcset strings. Runs at build, zero runtime cost.
+1. **Build-time**: Optimize locally, generate webp variants, validate alt text
+2. **Edge-time**: Serve through Netlify Image CDN for format negotiation + edge caching
 
-2. **Edge-time** (Option 2): Netlify Image CDN transforms images on the fly for anything the build layer missed — CMS uploads, dynamic content, forgotten optimizations.
+## Architecture
+
+```
+src="/images/hero.webp"               ← direct path, always works (fallback)
+srcset="/.netlify/images?url=...&w=320 320w,  ← Netlify CDN at each breakpoint
+        /.netlify/images?url=...&w=640 640w,
+        /.netlify/images?url=...&w=960 960w"
+```
+
+- `src` goes direct — progressive enhancement, works without CDN
+- `srcset` goes through Netlify CDN — auto format negotiation (webp/avif), edge cached, immutable
+- Build layer detects local `{name}-{width}w.webp` variants to determine breakpoints
+- If no local variants, uses standard breakpoints: 320, 480, 640, 800, 960, 1200
 
 ## Quick Start
 
-### In your Astro component:
+### 1. Copy to your project
+
+```bash
+cp -r astro-image-defaults/image-srcset.mjs your-site/src/utils/
+```
+
+Or use as a local package:
+```bash
+npm link ../astro-image-defaults
+```
+
+### 2. Use in Astro components
 
 ```astro
 ---
-import { getImageSrcset } from 'astro-image-defaults';
+import { getImageSrcset } from '../utils/image-srcset';
 const hero = getImageSrcset('/images/hero.webp', {
   defaultWidth: 1200,
   defaultHeight: 800,
@@ -25,57 +49,18 @@ const hero = getImageSrcset('/images/hero.webp', {
   sizes={hero.sizes}
   width={hero.width}
   height={hero.height}
-  alt="Hero image"
+  alt="Hero"
   loading="eager"
   decoding="async"
 />
 ```
 
-### As an Astro integration (build report):
-
-```js
-// astro.config.mjs
-import { imageDefaults } from 'astro-image-defaults';
-export default defineConfig({
-  integrations: [imageDefaults()],
-});
-```
-
-### Edge fallback (Netlify Image CDN):
-
-```astro
----
-import { netlifyImageSrcset } from 'astro-image-defaults';
-// Works for ANY image, even without local variants
-const img = netlifyImageSrcset('/images/uploaded-photo.jpg');
----
-<img src={img.src} srcset={img.srcset} sizes={img.sizes} alt="..." />
-```
-
-## Image Naming Convention
-
-Place variants next to the original in `/public/images/`:
-
-```
-hero.webp          (original, e.g. 1200px wide)
-hero-320w.webp
-hero-480w.webp
-hero-640w.webp
-hero-800w.webp
-hero-960w.webp
-```
-
-`getImageSrcset()` auto-detects these at build time.
-
-## Standard Breakpoints
-
-`320, 480, 640, 800, 960, 1200`
-
-## Netlify Headers
-
-Add to your `netlify.toml` for optimal caching:
+### 3. Add Netlify headers (netlify.toml)
 
 ```toml
+[images]
+  remote_images = ["https://img.youtube.com/.*"]
+
 [[headers]]
   for = "/.netlify/images/*"
   [headers.values]
@@ -85,14 +70,35 @@ Add to your `netlify.toml` for optimal caching:
 [[headers]]
   for = "/images/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
 ```
 
-## How the Two Layers Work Together
+## Image Naming Convention
 
-| Scenario | Build layer | Edge layer |
-|----------|-------------|------------|
-| Image with local variants | ✅ srcset from disk | Not needed |
-| Image without variants | ⚠️ No srcset | ✅ CDN transforms on-the-fly |
-| CMS/dynamic upload | N/A | ✅ CDN transforms on-the-fly |
-| YouTube thumbnail | Use MediaCard pattern | Not applicable (external) |
+```
+public/images/
+  hero.webp           ← original (e.g. 1200px)
+  hero-320w.webp      ← variant
+  hero-480w.webp
+  hero-640w.webp
+  hero-800w.webp
+```
+
+`getImageSrcset()` auto-detects these at build time and uses their widths for srcset breakpoints.
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `defaultWidth` | 800 | Intrinsic width of original image |
+| `defaultHeight` | 450 | Intrinsic height of original image |
+| `sizes` | responsive | CSS sizes attribute |
+| `useCdn` | true | Route srcset through Netlify CDN |
+
+## How It Works
+
+| Image state | src | srcset |
+|------------|-----|--------|
+| Has local variants | `/images/hero.webp` | CDN URLs at detected widths |
+| No local variants | `/images/hero.webp` | CDN URLs at standard breakpoints |
+| CDN disabled | `/images/hero.webp` | Local variant paths |

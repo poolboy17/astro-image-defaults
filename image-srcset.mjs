@@ -1,85 +1,81 @@
 /**
- * Build-time srcset auto-detection.
- * Scans /public/images/ for {name}-{width}w.{ext} variants.
+ * Build-time srcset with Netlify CDN URLs.
  * 
- * Usage:
- *   import { getImageSrcset } from 'astro-image-defaults';
- *   const img = getImageSrcset('/images/hero.webp', { defaultWidth: 1200, defaultHeight: 800 });
- *   // img.srcset = "/images/hero-320w.webp 320w, /images/hero-640w.webp 640w, ..."
+ * Scans /public/images/ for {name}-{width}w.{ext} variants to
+ * determine available breakpoints, then generates srcset pointing
+ * through Netlify Image CDN for edge delivery.
+ * 
+ * Architecture:
+ *   src  = /images/hero.webp (direct, fallback)
+ *   srcset = /.netlify/images?url=/images/hero.webp&w=320 320w, ...
  */
 
 import { readdirSync } from 'fs';
 import { join, basename } from 'path';
 
-let _cache = null;
-
-function getImageFiles() {
-  if (_cache) return _cache;
-  try {
-    _cache = new Set(readdirSync(join(process.cwd(), 'public', 'images')));
-  } catch {
-    _cache = new Set();
-  }
-  return _cache;
-}
-
-function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-/**
- * Standard breakpoints used across all sites.
- * Matches common device widths and typical grid layouts.
- */
 export const BREAKPOINTS = [320, 480, 640, 800, 960, 1200];
 
-/**
- * Default quality settings.
- */
-export const DEFAULTS = {
-  quality: 85,
-  format: 'webp',
-  sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px',
-};
+let _cache = null;
+function getImageFiles() {
+  if (_cache) return _cache;
+  try { _cache = new Set(readdirSync(join(process.cwd(), 'public', 'images'))); }
+  catch { _cache = new Set(); }
+  return _cache;
+}
+function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/** Netlify Image CDN URL */
+function cdnUrl(imagePath, width) {
+  return `/.netlify/images?url=${encodeURIComponent(imagePath)}&w=${width}`;
+}
 
 /**
- * Auto-detect srcset variants for a given image path.
- * Looks for files matching {basename}-{width}w.{ext} in /public/images/.
+ * Generate optimized image attributes.
  * 
  * @param {string} imagePath - e.g. "/images/hero.webp"
  * @param {object} opts
  * @param {string} opts.sizes - CSS sizes attribute
- * @param {number} opts.defaultWidth - intrinsic width of the src image
- * @param {number} opts.defaultHeight - intrinsic height of the src image
+ * @param {number} opts.defaultWidth - intrinsic width of the original
+ * @param {number} opts.defaultHeight - intrinsic height of the original
+ * @param {boolean} opts.useCdn - route srcset through Netlify CDN (default: true)
  * @returns {{ src, srcset, sizes, width, height }}
  */
 export function getImageSrcset(imagePath, opts = {}) {
+  const useCdn = opts.useCdn !== false;
+  const maxWidth = opts.defaultWidth || 800;
   const files = getImageFiles();
   const ext = imagePath.match(/\.\w+$/)?.[0] || '.webp';
   const name = basename(imagePath, ext);
-  
-  const variants = [];
-  const pattern = new RegExp(`^${esc(name)}-(\\d+)w${esc(ext)}$`);
 
+  // Detect local variant widths
+  const localWidths = [];
+  const pattern = new RegExp(`^${esc(name)}-(\\d+)w${esc(ext)}$`);
   for (const file of files) {
     const m = file.match(pattern);
-    if (m) variants.push({ path: `/images/${file}`, width: +m[1] });
+    if (m) localWidths.push(+m[1]);
   }
+  localWidths.sort((a, b) => a - b);
 
-  variants.sort((a, b) => a.width - b.width);
+  // Use detected widths if available, otherwise standard breakpoints
+  const widths = localWidths.length > 0
+    ? localWidths
+    : BREAKPOINTS.filter(w => w <= maxWidth);
 
   let srcset;
-  if (variants.length > 0) {
-    const parts = variants.map(v => `${v.path} ${v.width}w`);
-    if (opts.defaultWidth && files.has(basename(imagePath))) {
-      parts.push(`${imagePath} ${opts.defaultWidth}w`);
-    }
+  if (widths.length > 0) {
+    const parts = widths.map(w =>
+      useCdn ? `${cdnUrl(imagePath, w)} ${w}w` : `/images/${name}-${w}w${ext} ${w}w`
+    );
+    // Add full-size original
+    parts.push(useCdn ? `${cdnUrl(imagePath, maxWidth)} ${maxWidth}w` : `${imagePath} ${maxWidth}w`);
     srcset = parts.join(', ');
   }
 
   return {
     src: imagePath,
     srcset,
-    sizes: opts.sizes || DEFAULTS.sizes,
-    width: opts.defaultWidth || 800,
+    sizes: opts.sizes || '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px',
+    width: maxWidth,
     height: opts.defaultHeight || 450,
   };
 }

@@ -1,18 +1,22 @@
 /**
  * astro-image-defaults
  * 
- * Shared image optimization for Astro sites on Netlify.
- * Two layers:
- *   1. Build-time: auto-detect srcset variants from /public/images/
- *   2. Edge-time: Netlify Image CDN headers for outliers
+ * Standard image optimization for Astro sites on Netlify.
  * 
- * Usage in astro.config.mjs:
- *   import { imageDefaults } from 'astro-image-defaults';
- *   export default defineConfig({
- *     integrations: [imageDefaults()],
- *   });
+ * Architecture (belt and suspenders):
+ *   1. Build-time: optimize locally, validate, generate variants
+ *   2. Edge-time: serve ALL images through Netlify Image CDN
+ *      - src = direct /images/ path (fallback, always works)
+ *      - srcset = /.netlify/images?url=...&w=N (CDN-optimized)
+ *      - Netlify handles format negotiation + edge caching
+ * 
+ * Usage:
+ *   import { getImageSrcset } from 'astro-image-defaults';
+ *   const img = getImageSrcset('/images/hero.webp', { defaultWidth: 1200 });
+ *   // img.src = "/images/hero.webp"
+ *   // img.srcset = "/.netlify/images?url=...&w=320 320w, ..."
  */
 
-export { getImageSrcset } from './image-srcset.mjs';
+export { getImageSrcset, BREAKPOINTS } from './image-srcset.mjs';
 export { imageDefaults } from './integration.mjs';
-export { netlifyImageHeaders } from './netlify-image-headers.mjs';
+export { netlifyImageUrl, netlifyImageSrcset, generateTomlHeaders } from './netlify-image-headers.mjs';
