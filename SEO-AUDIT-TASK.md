@@ -85,14 +85,20 @@ The markdown summary should have:
 
 ## Available Tools
 
-**Google Search Console MCP server** is connected and available for:
-- `get_search_performance` — clicks, impressions, CTR, position data
-- `inspect_url` — check indexing status of specific URLs
-- `get_indexed_urls` — list indexed URLs for a property
-- `get_sitemaps` — list submitted sitemaps
-- `submit_url_for_indexing` — request indexing of new/updated pages
-- `batch_inspect_urls` — bulk URL inspection
-- `run_pagespeed_analysis` — PageSpeed Insights scores
+**Google Search Console MCP server** (`gsc-mcp-server`) — 17 tools:
+- `get_performance_data` — clicks, impressions, CTR, position (25k rows, regex filters, search type filter)
+- `detect_quick_wins` — finds high-impression low-CTR queries in striking distance (positions 4-20)
+- `get_url_inspection_result` — check indexing status of specific URLs
+- `batch_inspect` — bulk URL inspection
+- `get_index_coverage` — coverage issues for a property
+- `get_sitemap_data` / `get_sitemap_urls` — sitemap info and URL lists
+- `submit_url` — request indexing of new/updated pages
+- `pagespeed_analyze` / `pagespeed_batch` / `pagespeed_compare` / `pagespeed_quick_check` — PageSpeed Insights
+- `get_mobile_issues` — mobile usability problems
+- `list_sites` / `get_site_summary` — property overview
+- `full_index_report` / `check_url_status` — comprehensive indexing reports
+
+**Netlify MCP server** — deploy, env vars, extensions management
 
 Use GSC data to enrich the audit with real search performance metrics when available.
 
