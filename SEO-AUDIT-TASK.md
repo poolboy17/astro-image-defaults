@@ -55,9 +55,9 @@ After running the existing audit, also scan every HTML file in dist/ for these a
 - Count images missing `width`/`height`
 
 **Internal linking:**
-- Count internal links per page (links to same domain)
-- Flag pages with <2 internal links
-- Check for broken internal links (href to paths not in dist/)
+- Run internal linking audit: `node D:\dev\skills\internal-linking\audit-internal-links.mjs ./dist --config ./tests/linking.config.mjs --json`
+- Each site has its own `tests/linking.config.mjs` with page types, thresholds, and selectors
+- Checks: orphans, under/over-linked, broken links, self-links, bad anchors, dupe anchors
 
 **Affiliate link hygiene:**
 - Find all external links
