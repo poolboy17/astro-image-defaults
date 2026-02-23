@@ -10,19 +10,19 @@ Route ALL images (external and local) through Netlify Image CDN (`/.netlify/imag
 
 ## Sites
 
-1. **D:\headless\cursedtours-astro** (cursedtours.com)
+1. **D:\dev\projects\cursedtours** (cursedtours.com)
    - 151 `<img>` tags already rewritten to `<CdnImage>` but BUILD IS BROKEN — import paths wrong for nested pages like `src/pages/destinations/[slug].astro`
    - Fix: all imports must use the correct relative path depth (`../../components/CdnImage.astro` for files in subdirectories)
    - External images: TripAdvisor CDN URLs in `src/data/cityTours.ts` and `src/data/destinations.ts`
    - Local images: `/images/articles/*.webp`, `/images/destinations/*.webp`
 
-2. **D:\headless\devour-destinations-astro** (devourdestinations.com)
+2. **D:\dev\projects\devour-destinations** (devourdestinations.com)
    - External images: TripAdvisor CDN + Unsplash URLs
    - Unsplash URLs are in JS variables (e.g. `const heroImage = "https://images.unsplash.com/..."`)
    - TripAdvisor URLs likely in data files
    - Replace all `<img>` with `<CdnImage>`, fix import paths by depth
 
-3. **D:\headless\diggingscriptures-astro** (diggingscriptures.com)
+3. **D:\dev\projects\diggingscriptures** (diggingscriptures.com)
    - 4 TripAdvisor images + local images
    - Smaller site, fewer changes needed
 

@@ -7,7 +7,7 @@ Run the existing SEO audit framework across all 4 affiliate sites, aggregate res
 
 ## Architecture Already Built
 
-There is a shared audit framework at `D:\headless\shared-test-utils\` (zero external deps) that all 4 sites already use. Each site has:
+There is a shared audit framework at `D:\dev\projects\shared-test-utils\` (zero external deps) that all 4 sites already use. Each site has:
 - `tests/site.config.mjs` — site-specific check configuration
 - `tests/audit.mjs` — runner that discovers pages in dist/, runs checks, prints report
 
@@ -17,9 +17,9 @@ The shared framework checks: heading hierarchy, HTML balance, duplicate IDs, can
 
 | Site | Repo | Config |
 |------|------|--------|
-| cursedtours | D:\headless\cursedtours-astro | tests/site.config.mjs |
-| devour-destinations | D:\headless\devour-destinations-astro | tests/site.config.mjs |
-| diggingscriptures | D:\headless\diggingscriptures-astro | tests/site.config.mjs |
+| cursedtours | D:\dev\projects\cursedtours | tests/site.config.mjs |
+| devour-destinations | D:\dev\projects\devour-destinations | tests/site.config.mjs |
+| diggingscriptures | D:\dev\projects\diggingscriptures | tests/site.config.mjs |
 | protrainerprep | D:\dev\projects\protrainerprep | tests/site.config.mjs |
 
 ## Tasks
@@ -74,9 +74,9 @@ After running the existing audit, also scan every HTML file in dist/ for these a
 
 ### Step 4: Aggregate and report
 
-Save results to `D:\devprojects\astro-image-defaults\reports\seo-audit-YYYY-MM-DD.json`
+Save results to `D:\dev\projects\astro-image-defaults\reports\seo-audit-YYYY-MM-DD.json`
 
-Also save a markdown summary to `D:\devprojects\astro-image-defaults\reports\seo-summary-YYYY-MM-DD.md`
+Also save a markdown summary to `D:\dev\projects\astro-image-defaults\reports\seo-summary-YYYY-MM-DD.md`
 
 The markdown summary should have:
 - One section per site with pass/fail/warn totals
@@ -98,7 +98,7 @@ Use GSC data to enrich the audit with real search performance metrics when avail
 
 ## Important Notes
 - All audit code is pure Node.js with zero external dependencies
-- `shared-test-utils` is at `D:\headless\shared-test-utils\` — reference it via relative path from each site
+- `shared-test-utils` is at `D:\dev\projects\shared-test-utils\` — reference it via relative path from each site
 - Do NOT modify any site files — this is READ ONLY audit
 - Do NOT deploy anything
 - Do NOT touch erin-gee-preview
